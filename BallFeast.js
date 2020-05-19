@@ -1,9 +1,25 @@
 
+
+
+window.onload = function() {
 var c = document.getElementById('canvas1');
 var ctx = c.getContext('2d');
+var img = document.getElementById('rocket');
+
 
 canvas1.width = window.innerWidth;
 canvas1.height = window.innerHeight;
+
+window.addEventListener('mousemove',function(event) {
+	mouse.x = event.x;
+	mouse.y = event.y;
+});
+
+var mouse = {
+		x : undefined,
+		y : undefined
+	}
+
 
 window.addEventListener('resize',function() {
 	canvas1.width = window.innerWidth;
@@ -58,15 +74,19 @@ function drawBall(x,y,radius,vx,vy) {
 }
 BigBall = [];
 
-function codeBall(a,b,size,da,db) {
+function codeBall(a,b,size,da,db,m,n,dm) {
 	this.a = a;
 	this.b = b;
 	this.size = size;
 	this.da = da;
 	this.db = db;
+	this.m = m;
+	this.n = n;
+	this.dm = dm;
 	this.color = color;
 	
 	this.code = function() {
+		ctx.drawImage(img,this.m,this.n,30,30);
 		ctx.beginPath();
 		ctx.arc(this.a,this.b,this.size,0,2*Math.PI,false)
 		ctx.fillStyle = this.color;
@@ -76,11 +96,15 @@ function codeBall(a,b,size,da,db) {
 	this.drop = function() {
 		//this.a += this.da;
 		this.b += this.db;
+		this.m += this.dm;
 		if (this.b - this.size < 0) {
 			this.db = -this.db;
 		}
 		if(this.b + this.size > canvas1.height) {
 			this.b = 10;
+		}
+		if (this.m > canvas1.width) {
+			this.m = -10;
 		}
 		this.code();
 	}
@@ -96,12 +120,15 @@ for(i = 0; i < 200; i++) {
 	radius = (Math.random()* 4)+ 0.5;
 	vx  = Math.random() * 10;
 	vy = Math.random() * 5;
-
 	BigBall.push(new drawBall(x,y,radius,vx,vy));
 }
 
 
 SmallBall = [];
+
+m = -10;
+n = Math.random() * canvas1.height;
+dm = Math.random() * 0.3;
 
 for(i = 0; i < 300; i++) {
 	a = Math.random() * canvas1.width;
@@ -109,8 +136,8 @@ for(i = 0; i < 300; i++) {
 	size = 0.5;
 	da  = 1;
 	db = Math.random() * 0.1;
-
-	SmallBall.push(new codeBall(a,b,size,da,db));
+	
+	SmallBall.push(new codeBall(a,b,size,da,db,m,n,dm));
 }
 
 }
@@ -132,3 +159,6 @@ animate = function() {
 animate();
 
 init();
+}
+
+
