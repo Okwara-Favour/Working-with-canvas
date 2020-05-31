@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Ball Dance</title>
+<style>
+canvas {
+	background:white;
+	border:1px solid black;
+}
+</style>
+</head>
+<body>
+<img id="rocket" style="display:none" src="//C:\Users\Okwara Emmanuel\Documents\Acoding\Pictures/spaceship.png" width="100" height="100"/> 
+<canvas id="canvas1" width="500px" height="500px">
+<script>
+
+var c = document.getElementById('canvas1')
+var ctx = c.getContext('2d');
+
+canvas1.width = window.innerWidth;
+canvas1.height = window.innerHeight;
+
+window.addEventListener('resize',function() {
+	canvas1.width = window.innerWidth;
+	canvas1.height = window.innerHeight;
+	init()
+});
+
+window.addEventListener('mousemove',function(event) {
+	mouse.x = event.x;
+	mouse.y = event.y;
+});
+
+var mouse = {
+		x : 10,
+		y : 10
+	}
+
+var img = document.getElementById('rocket')
+
+var colorArray = [
+	'rgb(255,100,100)',
+    'rgb(100,255,100)',
+    'rgb(100,100,255)',
+    'rgb(143,100,150)',
+]
+
+function setRange(min, max) {
+	return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
+function getDistance(x1,y1,x2,y2) {
+	xDistance = x2 - x1;
+	yDistance = y2 - y1;
+	return Math.sqrt(Math.pow(xDistance, 2) + Math.pow(yDistance, 2))
+}
+
+function drawCode(x,y,radius,color) {
+	this.x = x;
+	this.y = y;
+	this.radius = radius;
+	this.color = color;
+	//this.color = colorArray [Math.floor(Math.random() * colorArray .length)];
+	this.draw = function() {
+		ctx.beginPath();
+		ctx.arc(this.x,this.y,this.radius,0,2*Math.PI,false);
+		ctx.fillStyle = this.color;
+		ctx.fill();
+		ctx.closePath();
+		}
+	this.update = function() {
+		this.draw();
+		}
+	}
+
+var TestDraw;
+
+init = function() {	
+
+
+BigCircle = new drawCode(300,300,100,"black");
+SmallCircle = new drawCode(10,10,30,"red");
+
+}
+
+function animate() {
+		requestAnimationFrame(animate);
+		//ctx.fillStyle = "rgba(255,255,255,0.05)";
+		ctx.clearRect(0,0,canvas1.width,canvas1.height);
+		BigCircle.update();
+		SmallCircle.x = mouse.x;
+		SmallCircle.y = mouse.y;
+		SmallCircle.update();
+		
+		if (getDistance(SmallCircle.x,SmallCircle.y,BigCircle.x,BigCircle.y) < 
+		SmallCircle.radius + BigCircle.radius ) {
+			BigCircle.color = "red";
+		}
+		if (getDistance(SmallCircle.x,SmallCircle.y,BigCircle.x,BigCircle.y) > 
+		SmallCircle.radius + BigCircle.radius ) {
+			BigCircle.color = "black";
+		}
+		console.log(getDistance(SmallCircle.x,SmallCircle.y,BigCircle.x,BigCircle.y))
+		
+	}
+	init();
+	
+	animate();
+	
+
+</script>
+</body>
+</html>
