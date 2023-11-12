@@ -1,0 +1,455 @@
+<html>
+    <head></head>
+    <body>
+        <canvas id="canvas1" width="300" height="200">
+        </canvas> 
+    <script>
+	//create the 2d canvas
+	var c=document.getElementById("canvas1");
+	var ctx=c.getContext("2d");
+    
+	//declare mouse event
+    window.addEventListener('mousemove',function(event) {
+		mouse.x = event.x;
+		mouse.y = event.y;
+    });
+    
+	//declare mouse initial position
+    var mouse = {
+        x : 10,
+        y : 10
+    }
+    
+	//speed array not used here
+    var direcArray = [
+        -1,
+        1,
+        -2,
+        2
+    ]
+	var widthStop = 300;
+	
+	class randomVariables {
+		x = Math.random() * canvas1.width;
+		y = Math.random() * canvas1.height;
+		radius = Math.random() * (30-15) + 15;
+		vx = Math.random() * (8-3) + 3;
+		vy = Math.random() * (8-3) + 3;
+		
+		palette = function() {
+			this.colorArray = [
+				"#9999FF",
+				"#FF007F",
+				"#CC99FF",
+				"black",
+				"#A0A0A0"
+			]
+			this.colors = this.colorArray[Math.floor(Math.random() * this.colorArray.length)];
+			return this.colors;
+		}
+	}
+    
+	//this class is specifically for creating texts on the canvaas 
+	class DrawText {
+		constructor(string, width, height) {
+			this.string = string;
+			this.width = width;
+			this.height = height;
+		}
+		drawText = function() {
+		//draws the texts
+            ctx.beginPath()
+            ctx.font = "30px Comic Sans MS";
+            ctx.fillStyle = "black";
+            ctx.strokeStyle = ("green");
+            ctx.textAlign = "center";
+            ctx.fillText(this.string, this.width, this.height);
+            ctx.stroke();
+            ctx.fill();
+            ctx.closePath();
+        }
+	}
+    
+    
+	//this class is specifically for creating rectangles on the canvaas
+	class DrawLine {
+		constructor(x,y,dx,dy,width,height) {
+			this.x = x;
+			this.y = y;
+			this.dx = dx;
+			this.dy = dy;
+			this.width = width;
+			this.height = height;
+			this.color = "green";
+			this.hitCount = 0;
+			this.hitCalc = 0;
+		}
+		drawRect = function() {
+			ctx.beginPath()
+            ctx.strokeStyle = ("green");
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x,this.y,this.width,this.height);
+            ctx.stroke();
+            ctx.fill();
+            ctx.closePath();
+		}
+		boundary = function() {
+			if (this.x + this.width > 300 || this.x < 0) {
+				this.dx = -this.dx;
+			}
+			if (this.y + this.height > 200 || this.y < 0) {
+				this.dy = -this.dy;
+			}
+		}
+		updateRect = function() {
+			//moves the object forward
+			this.x+= this.dx;
+			this.y+= this.dy;
+			//prevents object from going out of bounds(although not strong enough)
+			//if hits either ends, go the opposite direction
+			this.boundary();
+			//draws object
+			this.drawRect();
+		}
+		rangeOfCol = function(firstX,secondX,firstSize) {
+			return Math.max(firstX, Math.min(secondX, firstX + firstSize));
+		}
+		getDistance = function(other) {
+			var xDistance = other.x - this.x;
+			var yDistance = other.y - this.y;
+			return Math.sqrt(Math.pow(xDistance,2) + Math.pow(yDistance,2));
+		}
+		trackOther = function(other, range, speed, flag) {
+			this.perSpeed = speed/100;
+			const prevdy = 1;
+			if(this.getDistance(other)<=range) {
+				this.dx = (other.x - this.x) * this.perSpeed;
+				this.dy = (other.y - this.y) * this.perSpeed;
+				flag = 1;
+				this.boundary();
+			}
+			else {
+				flag = 0;
+			}
+			return flag;
+		}
+		quadilateralCollision = function(other) {
+			if(((this.x + this.width) > other.x && (this.y + this.height) > other.y) &&
+				((this.x) < (other.x + other.width) && (this.y) < (other.y + other.height))) {
+				//this.x -= this.dx;
+				//console.log("collision");
+				this.dx = -this.dx;
+				other.dx =  -other.dx;
+			}
+			else {
+				//console.log("no collision");
+			}
+		}
+	}
+    
+    callRandom = new randomVariables();
+	var flagHit = false;
+	var timerColorReset = 0;
+	//var hitCount = 0;
+	//var hitCalc = 0;
+	
+	class DrawBall {
+		constructor(x,y, dx, dy, radius) {
+			this.x = x;
+			this.y = y;
+			this.dx = dx;
+			this.dy = dy;
+			this.radius = radius;
+			this.color = callRandom.palette();
+			this.radians = 1;
+			this.spd = 0.09;
+			this.colliding = false;
+		}
+		drawCircle = function() {
+			ctx.beginPath()
+			ctx.arc(this.x,this.y,this.radius,0,2*Math.PI,false);
+			ctx.fillStyle = this.color;
+			ctx.fill();
+			ctx.closePath();
+		}
+		boundary = function() {
+			if (this.x + this.radius > widthStop) {
+				this.x = 0;
+				//this.dx = -this.dx;
+			}
+			if (this.y - this.radius < -widthStop) {
+				console.log("bruh");
+				this.y = 200;
+				//this.dy = -this.dy;
+			}
+			/*if (this.x + this.radius > 300 || this.x - this.radius < 0) {
+				this.dx = -this.dx;
+			}
+			if (this.y + this.radius > 200) {
+				//this.dy = -this.dy;
+			}*/
+		}
+		updateCircle = function() {
+			this.drawCircle();
+			this.x += this.dx;
+			this.y -= this.dy;
+			this.boundary();
+		}
+		circularMotion = function() {
+			this.drawCircle();
+			this.x += Math.cos(this.radians) * (this.dx) * 2;
+			this.y += Math.sin(this.radians) * (this.dy) * 2;
+			this.radians += this.spd;
+			this.boundary();
+		}
+		setRange = function(min, max) {
+			return Math.floor(Math.random() * (max - min + 1) + min)
+		}
+		getDistance = function(x1,y1,x2,y2) {
+			var xDistance = x2 - x1;
+			var yDistance = y2 - y1;
+			return Math.sqrt(Math.pow(xDistance,2) + Math.pow(yDistance,2));
+		}
+		trackOther = function(other, range, speed) {
+			this.perSpeed = speed/100;
+			if(this.getDistance(other)<=range) {
+				this.dx = (other.x - this.x) * this.perSpeed;
+				this.dy = (other.y - this.y) * this.perSpeed;
+				this.boundary();
+			}
+		}
+		rangeOfCol = function(firstX,secondX,firstSize) {
+			return Math.max(firstX, Math.min(secondX, firstX + firstSize));
+		}
+		collisionWithRectangle = function(other) {
+			var xBound = this.rangeOfCol(other.x,this.x,other.width);
+			var yBound = this.rangeOfCol(other.y,this.y,other.height);
+			if(this.getDistance(xBound, yBound, this.x, this.y) < (this.radius)) {
+				/*this.x -= this.dx;
+				this.dx = -this.dx * BallBounce.friction;*/
+				//this.color = "rgba(255,255,255,0.3)"
+				//console.log(flagHit);
+				this.color = "rgba(255,255,255,0)";
+				other.color = "rgba(255,255,255,0)";
+				this.colliding = true;
+				other.hitCount++;
+				/*if((other.hitCount % 100) == 0) {
+					other.hitCalc++;
+				}*/
+				console.log(other.hitCount);
+				this.y = -1;
+				/*this.y -= this.dy;
+				this.dy = -this.dy;
+				
+				other.x -= this.dx;
+				other.dx = -other.dx;
+				other.y -= other.dy;
+				other.dy = -other.dy;*/
+			}
+			else {
+				if(this.colliding != true && other.hitCount < 40) {
+					if((timerColorReset % 2) == 0) {
+						other.color = "green";
+					}
+					//setTimeout(function() {other.color = "green";}, 3000);
+				}
+				if(this.colliding != true && other.hitCount > 40) {
+					if((timerColorReset % 2) == 0) {
+						other.color = "black";
+					}
+					//setTimeout(function() {other.color = "green";}, 3000);
+				}
+				this.colliding = false;
+			}
+			
+			if(other.hitCount > 50) {
+				other.x = -200;
+				other.y = -200;
+				other.dx = 0;
+				other.dy = 0;
+				other.color = "black";
+			}
+			
+		}
+		collisionWithCircle = function(other) {
+			if(this.getDistance(this.x, this.y, other.x, other.y) < (this.radius + other.radius)) {
+				this.x -= this.dx;
+				this.dx = -this.dx;
+				this.y -= this.dy;
+				this.dy = -this.dy;
+				
+				other.x -= this.dx;
+				other.dx = -other.dx;
+				other.y -= other.dy;
+				other.dy = -other.dy;
+			}
+		}
+	}
+	
+b1 = [];
+b1copy = [];
+for(i = 0; i < 10; i++) {
+	b1[i] = new DrawBall(150,100,0,0.5,10);
+	b1copy[i] = new DrawBall(150,100,0,0.5,10);	
+}
+
+var b2 = new DrawBall(150,100,0,1,10);
+var L1 = new DrawLine(150,190,0,0,50,10);
+obstacle = [];
+var extraX = 0;
+var extraY = 0;
+var obstWidth = 50;
+var Xdist = 0;
+var Ydist = 30;
+for(i = 0; i < 12; i++) {
+	Xdist = Xdist + extraX;
+	//console.log(Xdist);
+	if((Xdist + obstWidth) > 300) {
+		Xdist = 0;
+		extraY = 20;
+		Ydist = Ydist + extraY;
+		obstacle[i] = new DrawLine(Xdist,Ydist,1,0,obstWidth,10);
+	}
+	else {
+		obstacle[i] = new DrawLine(Xdist,Ydist,1,0,obstWidth,10);
+		extraX = 70;
+	}
+}	
+//gets the distance between objects
+function getDistance(x1,y1,x2,y2) {
+    var xDistance = x2 - x1;
+    var yDistance = y2 - y1;
+    return Math.sqrt(Math.pow(xDistance,2) + Math.pow(yDistance,2));
+}
+
+//idea, clamping
+//gets the maximum value(or point) from an object and a surface or another object
+//explanation: https://www.youtube.com/watch?v=D2a5fHX-Qrs
+function rangeOfCol(firstX,secondX,firstSize) {
+    return Math.max(firstX, Math.min(secondX, firstX + firstSize));
+}
+    
+function mean(first, second) {
+	//var result = 0;
+	return first + (second/2);
+}
+    
+	b1[0].x = mean(L1.x, L1.width);
+	var num = b1[0].x;
+	for(i=0; i<b1.length; i++) {
+		b1[i].x = num;
+		b1[i].y = L1.y - b1[i].radius;
+		b1copy[i].x = L1.x + L1.width;
+	}
+	
+var sccount = 0;
+var tIme = 0;
+function animate() {
+    requestAnimationFrame(animate);
+	/*
+	//rather than clearRect, this also clears the canvas but leaves a bit left to create a trail
+    ctx.fillStyle="rgba(255,255,255,0.3)"; 
+	ctx.fillRect(0,0,canvas1.width,canvas1.height);    
+    */
+    ctx.clearRect(0,0,canvas1.width,canvas1.height);
+	
+	//console.log(obstacle.length);
+	
+	b2.x = mean(L1.x, L1.width);
+	b2.y = L1.y - b2.radius;
+	L1.drawRect();
+	for(i=0; i<obstacle.length; i++) {
+		obstacle[i].updateRect();
+	}
+	//b2.draw();
+	widthStop = 1000;
+	//heightStop = -800;
+	/*for(i=0; i<b1.length; i++) {
+		b1[i].draw();
+	}*/
+	
+	//console.log(b1[0].x);
+	for(i=0; i<b1.length; i++) {
+		if((tIme > 10 && tIme < 20) && (b1[i].y < -100)) {
+			b1[i].x = L1.x;
+			b1[i].y = L1.y - b1[i].radius;
+			b1copy[i].x = L1.x + L1.width;
+			b1copy[i].y = L1.y - b1[i].radius;
+			
+			b1[i].color = callRandom.palette();
+			b1copy[i].color = callRandom.palette();
+			
+			b1[i].isColliding = false; // Reset collision state
+			b1copy[i].isColliding = false; // Reset collision state
+		}
+		else{
+			if(b1[i].y < -100) {
+				b1[i].x = mean(L1.x, L1.width);
+				b1[i].y = L1.y - b1[i].radius;
+				b1[i].color = callRandom.palette();
+			}
+		}
+		//b1[i].updateCircle();
+		if(b1[i].x >= (widthStop)/2) {
+			b1[i].y = L1.y - b1[i].radius;
+		}
+		
+		for(j=i+1; j<b1.length;j++) {
+			if((getDistance(b1[i].x,b1[i].y,b1[j].x,b1[j].y)) >= 60) {
+				b1[i].updateCircle();
+				for(k=0; k<obstacle.length; k++) {
+					b1[i].collisionWithRectangle(obstacle[k]);
+				}
+				////////////////
+				if(tIme > 10 && tIme < 20) {
+					b1copy[i].updateCircle();
+					for(k=0; k<obstacle.length; k++) {
+						b1copy[i].collisionWithRectangle(obstacle[k]);
+					}
+				}
+				///////////////
+			}
+			b1[j].updateCircle();
+			for(k=0; k<obstacle.length; k++) {
+				b1[j].collisionWithRectangle(obstacle[k]);
+			}
+			/////////////
+			if(tIme > 10 && tIme < 20) {
+					b1copy[j].updateCircle();
+					for(k=0; k<obstacle.length; k++) {
+						b1copy[j].collisionWithRectangle(obstacle[k]);
+					}
+			}
+			////////////
+		}
+	}
+	
+	for(i = 0; i < obstacle.length; i++) {
+		if(tIme > 0 && (tIme%5)==0 && (obstacle[i].y - 150 < 0)) {
+			obstacle[i].dy = 0.2;
+			//obstacle[i].trackOther(L1, 1000, 1, 0);
+		}
+		else {
+			obstacle[i].dy = 0;
+		}
+	//	console.log(obstacle[i].y);
+	}
+	if(sccount == 0) {
+		tIme = 0;
+	}
+	sccount++;
+	if((sccount%30)==0) {
+		timerColorReset++;
+	}
+	if((sccount%100)==0) {
+		tIme++;
+	}
+	//console.log(tIme);
+		
+	L1.x = mouse.x;
+	L1.y = mouse.y;
+}
+animate();
+    </script>
+    </body>
+</html>
