@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Animation</title>
+</head>
+<body>
+
+<canvas id="canvas1" style="border:1px solid black; background:black;" width="450px" height="200px"></canvas>
+<br>
+
+
+<script>
+var c = document.getElementById('canvas1')
+var ctx = c.getContext('2d')
+
+canvas1.width = window.innerWidth;
+canvas1.height = window.innerHeight;
+
+function bounce(friction, gravity) {
+	this.friction = friction;
+	this.gravity = gravity;
+}
+var BallBounce = new bounce(0.8, 0.2);
+
+var colorArray = [
+	'green',
+	'blue',
+	'red',
+	'purple',
+	'yellow',
+	'white',
+	'orange',
+	]
+
+function drawBall(x,y,radius,vx,vy) {
+	this.x = x;
+	this.y = y;
+	this.radius = radius;
+	this.vx = vx;
+	this.vy = vy;
+	this.angle = 50;
+	this.color = colorArray[Math.floor(Math.random() * colorArray.length)];
+		this.draw = function() {
+	
+			ctx.beginPath()
+			ctx.arc(this.x,this.y,this.radius,0,2*Math.PI,false)
+			ctx.fillStyle = this.color;
+			ctx.fill();
+			ctx.strokeStyle = "white";
+			ctx.stroke();
+		};
+		this.update = function() {
+			this.x += this.vx * Math.sin(this.angle);
+			this.y += this.vy;
+		if (this.x + this.radius > canvas1.width || this.x - this.radius < 0 ) {
+			this.vx = -this.vx;
+			}
+	
+		if (this.y + this.radius > canvas1.height) {
+			this.y = (canvas1.height - 20);
+			this.vy = -this.vy * BallBounce.friction;
+			} 
+			else {
+				this.vy += BallBounce.gravity;
+			}
+		this.draw();
+		}
+}
+Balls = [];
+function multiBalls() {
+	for (i = 0; i < 300; i++) {
+	x = Math.random() * canvas1.width;
+	y = (Math.random() + 0.06) * (canvas1.height - 50);
+	radius = 20;
+	vx = Math.random() * 10;
+	vy = Math.random() * 3;
+	Balls.push(new drawBall(x,y,radius,vx,vy));
+	}
+}
+multiBalls();
+
+function accelerate(n) {
+	BallBounce.gravity = n;
+}	
+
+
+function animate() {
+	requestAnimationFrame(animate);
+	Balls.gravity = 0.7;
+	ctx.fillStyle="rgba(0,0,0,0.1)";
+	ctx.fillRect(0,0,canvas1.width,canvas1.height);	
+	//ctx.clearRect(0,0,canvas1.width,canvas1.height);
+	for (i = 0; i < Balls.length; i++) {
+	Balls[i].update();
+		}
+	}
+animate();
+</script>
+
+<button onmousedown = "accelerate(-0.5)" onmouseup = "accelerate(0.07)">Accelerate</button>
+
+</body>
+</html>
