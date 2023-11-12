@@ -1,0 +1,316 @@
+<html>
+    <head></head>
+    <body>
+        <canvas id="canvas1" width="300" height="200">
+        </canvas> 
+    <script>
+	//create the 2d canvas
+	var c=document.getElementById("canvas1");
+	var ctx=c.getContext("2d");
+    
+	//declare mouse event
+    window.addEventListener('mousemove',function(event) {
+		mouse.x = event.x;
+		mouse.y = event.y;
+    });
+    
+	//declare mouse initial position
+    var mouse = {
+        x : 10,
+        y : 10
+    }
+    
+	//speed array not used here
+    var direcArray = [
+        -1,
+        1,
+        -2,
+        2
+    ]
+	//color array
+    class randomVariables {
+		x = Math.random() * canvas1.width;
+		y = Math.random() * canvas1.height;
+		radius = Math.random() * (30-15) + 15;
+		vx = Math.random() * (8-3) + 3;
+		vy = Math.random() * (8-3) + 3;
+		
+		palette = function() {
+			this.colorArray = [
+				"#9999FF",
+				"#FF007F",
+				"#CC99FF",
+				"black",
+				"#A0A0A0"
+			]
+			this.colors = this.colorArray[Math.floor(Math.random() * this.colorArray.length)];
+			return this.colors;
+		}
+	}
+    
+	function bounce(friction, gravity) {
+		this.friction = friction;
+		this.gravity = gravity;
+	}
+	var BallBounce = new bounce(0.4, 0.2);
+	//this class is specifically for creating texts on the canvaas 
+	class DrawText {
+		constructor(string, width, height) {
+			this.string = string;
+			this.width = width;
+			this.height = height;
+		}
+		drawText = function() {
+		//draws the texts
+            ctx.beginPath()
+            ctx.font = "30px Comic Sans MS";
+            ctx.fillStyle = "black";
+            ctx.strokeStyle = ("green");
+            ctx.textAlign = "center";
+            ctx.fillText(this.string, this.width, this.height);
+            ctx.stroke();
+            ctx.fill();
+            ctx.closePath();
+        }
+	}
+    
+	//this class is specifically for creating rectangles on the canvaas
+	class DrawLine {
+		constructor(x,y,dx,dy,width,height) {
+			this.x = x;
+			this.y = y;
+			this.dx = dx;
+			this.dy = dy;
+			this.width = width;
+			this.height = height;
+			this.color = "green";
+		}
+		drawRect = function() {
+			ctx.beginPath()
+            ctx.strokeStyle = ("green");
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x,this.y,this.width,this.height);
+            ctx.stroke();
+            ctx.fill();
+            ctx.closePath();
+		}
+		boundary = function() {
+			if (this.x + this.width > 300 || this.x < 0) {
+				this.dx = -this.dx;
+			}
+			if (this.y + this.height > 200 || this.y < 0) {
+				this.dy = -this.dy;
+			}
+		}
+		updateRect = function() {
+			//moves the object forward
+			this.x+= this.dx;
+			this.y+= this.dy;
+			//prevents object from going out of bounds(although not strong enough)
+			//if hits either ends, go the opposite direction
+			this.boundary();
+			//draws object
+			this.drawRect();
+		}
+		rangeOfCol = function(firstX,secondX,firstSize) {
+			return Math.max(firstX, Math.min(secondX, firstX + firstSize));
+		}
+		getDistance = function(other) {
+			var xDistance = other.x - this.x;
+			var yDistance = other.y - this.y;
+			return Math.sqrt(Math.pow(xDistance,2) + Math.pow(yDistance,2));
+		}
+		trackOther = function(other, range, speed, flag) {
+			this.perSpeed = speed/100;
+			const prevdy = 1;
+			if(this.getDistance(other)<=range) {
+				//this.dx = (other.x - this.x) * this.perSpeed;
+				this.dy = (other.y - this.y) * this.perSpeed;
+				flag = 1;
+				//console.log("tracking");
+				this.boundary();
+			}
+			else {
+				flag = 0;
+			}
+			return flag;
+			//console.log("not tracking");
+		}
+		quadilateralCollision = function(other) {
+			if(((this.x + this.width) > other.x && (this.y + this.height) > other.y) &&
+				((this.x) < (other.x + other.width) && (this.y) < (other.y + other.height))) {
+				//this.x -= this.dx;
+				//console.log("collision");
+				this.dx = -this.dx;
+				other.dx =  -other.dx;
+			}
+			else {
+				//console.log("no collision");
+			}
+		}
+		
+	}
+    //this function is specifically for creating circles on the canvaas
+	var elevateTime = 0;
+	var jumpFlag = 0;
+    class DrawBall {
+		constructor(x,y, dx, dy, radius) {
+			this.x = x;
+			this.y = y;
+			this.dx = dx;
+			this.dy = dy;
+			this.radius = radius;
+			this.color = "green";
+			this.radians = 1;
+			this.spd = 0.09;
+		}
+		drawCircle = function() {
+			ctx.beginPath()
+			ctx.arc(this.x,this.y,this.radius,0,2*Math.PI,false);
+			ctx.fillStyle = this.color;
+			ctx.fill();
+			ctx.closePath();
+		}
+		boundary = function() {
+			if (this.x + this.radius > 300) {
+				this.x = 300 - this.radius;
+				this.dx = -this.dx;
+			}
+			else if(this.x - this.radius < 0) {
+				this.x = 0 + this.radius;
+				this.dx = -this.dx;
+			}
+			if (this.y + this.radius > 200) {
+				jumpFlag = 1;
+				this.y = 200 - this.radius;
+				this.dy = -this.dy * BallBounce.friction;
+			}
+			else if ( this.y - this.radius < 0) {
+				this.y = 0 + this.radius;
+				this.dy = this.dy * 0.001;
+			}
+			else {
+				this.dy += BallBounce.gravity;
+				if(this.y < 200 - (this.radius + (this.radius/3))) {
+					jumpFlag = 0;
+				}
+			}
+		}
+		updateCircle = function() {
+			this.drawCircle();
+			this.x += this.dx;
+			this.y += this.dy;
+			this.boundary();
+		}
+		circularMotion = function() {
+			this.drawCircle();
+			this.x += Math.cos(this.radians) * (this.dx) * 2;
+			this.y += Math.sin(this.radians) * (this.dy) * 2;
+			this.radians += this.spd;
+			this.boundary();
+		}
+		setRange = function(min, max) {
+			return Math.floor(Math.random() * (max - min + 1) + min)
+		}
+		getDistance = function(other) {
+			var xDistance = other.x - this.x;
+			var yDistance = other.y - this.y;
+			return Math.sqrt(Math.pow(xDistance,2) + Math.pow(yDistance,2));
+		}
+		trackOther = function(other, range, speed) {
+			this.perSpeed = speed/100;
+			if(this.getDistance(other)<=range) {
+				this.dx = (other.x - this.x) * this.perSpeed;
+				this.dy = (other.y - this.y) * this.perSpeed;
+				this.boundary();
+			}
+		}
+		rangeOfCol = function(axis) {
+			return Math.max(this.x, Math.min(axis, this.x + this.radius));
+		}
+		collisionDet = function(other) {
+			if(this.getDistance(other) < (this.radius + other.radius)) {
+				this.x -= this.dx;
+				this.dx = -this.dx;
+				this.y -= this.dy;
+				this.dy = -this.dy;
+				
+				other.x -= this.dx;
+				other.dx = -other.dx;
+				other.y -= other.dy;
+				other.dy = -other.dy;
+			}
+		}		
+	}
+    
+
+//call variables here
+
+b1 = new DrawBall(150,50,0,5,10);
+
+function accelerate(n, duration) {
+	if(jumpFlag == 1 && elevateTime < 60) {
+			BallBounce.gravity = n;
+	}
+	else {
+		BallBounce.gravity = 0.2;
+	}
+}	 
+//b2 = new DrawBall(170,120,2,2,10);
+
+/*l1 = new DrawLine(150,100,0,2,50,10);
+l2 = new DrawLine(250,100,0.5,0,50,10);*/
+//height test
+/*
+l1 = new DrawLine(150,10,0,1,50,10);
+l2 = new DrawLine(150,180,0,1,50,10);
+*/
+//gets the distance between objects
+function getDistance(x1,y1,x2,y2) {
+    var xDistance = x2 - x1;
+    var yDistance = y2 - y1;
+    return Math.sqrt(Math.pow(xDistance,2) + Math.pow(yDistance,2));
+}
+
+function check(a, b) {
+	return (a > b);
+}
+
+//idea, clamping
+//gets the maximum value(or point) from an object and a surface or another object
+//explanation: https://www.youtube.com/watch?v=D2a5fHX-Qrs
+function rangeOfCol(firstX,secondX,firstSize) {
+    return Math.max(firstX, Math.min(secondX, firstX + firstSize));
+}
+
+function isEqual(a,b) {
+	return a == b;
+}
+
+var count = 0;
+function animate() {
+    requestAnimationFrame(animate);
+	/*
+	//rather than clearRect, this also clears the canvas but leaves a bit left to create a trail
+    ctx.fillStyle="rgba(255,255,255,0.3)"; 
+	ctx.fillRect(0,0,canvas1.width,canvas1.height);    
+    */
+    ctx.clearRect(0,0,canvas1.width,canvas1.height);
+    b1.updateCircle();
+	console.log(jumpFlag + " " + elevateTime);
+	if(jumpFlag == 0) {
+		elevateTime++;
+		if(elevateTime > 1) {
+			BallBounce.gravity = 0.2;
+		}
+	}
+	else {
+		elevateTime = 0;
+	}
+	count++;
+}
+animate();
+    </script>
+	<button onclick = "accelerate(-0.3, 1000)">Accelerate</button>
+    </body>
+</html>
