@@ -76,6 +76,7 @@ function setRange(min, max) {
 	return Math.floor(Math.random() * (max - min + 1) + min)
 }
 
+var frameR = 0;
 var scoreCount = 0;
 var frameNo = 0;
 
@@ -85,7 +86,7 @@ function everyinterval(n) {
 }
 
 function everyinterval(n) {
-  if ((scoreCount / n) % 1 == 0) {return true;}
+  if ((frameR / n) % 1 == 0) {return true;}
   return false;
 }
 	
@@ -282,6 +283,7 @@ for(i = 0; i < 300; i++) {
 animate = function() {
 	myCodeArea.clear();
 	requestAnimationFrame(animate);
+	frameR += 1;
 	
 	for(i = 0; i < BigBall.length;i++) {
 		BigBall[i].update();
@@ -329,7 +331,9 @@ animate = function() {
 	bossObstacle.disturb2();
 	bossObstacle.m -= 0.5;
 	
-	scoreCount += 1;
+	if((frameR % 100) == 0) {
+		scoreCount += 1;
+	}
 	myScore.text = "SCORE: " + scoreCount;
 	myScore.score();
 	ControlImage.speed();
